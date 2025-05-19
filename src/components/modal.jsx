@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 function XModal() {
   const [open, setOpen] = useState(false);
@@ -12,15 +12,22 @@ function XModal() {
   const modalRef = useRef(null);
 
   // Close modal if click outside modal-content
-  const handleBackdropClick = (e) => {
-    if (modalRef.current && !modalRef.current.contains(e.target)) {
-      setOpen(false);
-      setFields({ username: "", email: "", dob: "", phone: "" });
-      setErrors({});
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (open && modalRef.current && !modalRef.current.contains(event.target)) {
+        setOpen(false);
+        setFields({ username: "", email: "", dob: "", phone: "" });
+        setErrors({});
+      }
     }
-  };
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
 
-  // Validate fields
   const validate = () => {
     const errs = {};
     if (!fields.username) errs.username = "Username is required";
@@ -30,37 +37,31 @@ function XModal() {
     return errs;
   };
 
-  // Handle submit
   const handleSubmit = (e) => {
     e.preventDefault();
     const errs = validate();
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
-    // Email validation
     if (!fields.email.includes("@")) {
       alert("Invalid email. Please check your email address.");
       return;
     }
-    // Phone validation
     if (!/^\d{10}$/.test(fields.phone)) {
       alert("Invalid phone number. Please enter a 10-digit phone number.");
       return;
     }
-    // DOB validation
     const dobDate = new Date(fields.dob);
     const now = new Date();
     if (dobDate > now) {
       alert("Invalid date of birth. Please enter a valid date.");
       return;
     }
-    // Success: close modal
     setOpen(false);
     setFields({ username: "", email: "", dob: "", phone: "" });
     setErrors({});
   };
 
-  // Handle input change
   const handleChange = (e) => {
     setFields({ ...fields, [e.target.id]: e.target.value });
     setErrors({ ...errors, [e.target.id]: "" });
@@ -72,7 +73,7 @@ function XModal() {
         <button onClick={() => setOpen(true)}>Open Form</button>
       )}
       {open && (
-        <div className="modal" onClick={handleBackdropClick} style={{
+        <div className="modal" style={{
           position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
           background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center"
         }}>
@@ -82,7 +83,6 @@ function XModal() {
             style={{
               background: "#fff", padding: 24, borderRadius: 8, minWidth: 320, position: "relative"
             }}
-            onClick={e => e.stopPropagation()}
           >
             <form onSubmit={handleSubmit}>
               <div>
