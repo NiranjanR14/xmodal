@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 
-function XModal() {
+const XModal = forwardRef((props, ref) => {
   const [open, setOpen] = useState(false);
   const [fields, setFields] = useState({
     username: "",
@@ -11,22 +11,17 @@ function XModal() {
   const [errors, setErrors] = useState({});
   const modalRef = useRef(null);
 
-  // Close modal if click outside modal-content
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (open && modalRef.current && !modalRef.current.contains(event.target)) {
-        setOpen(false);
-        setFields({ username: "", email: "", dob: "", phone: "" });
-        setErrors({});
-      }
+  useImperativeHandle(ref, () => ({
+    isOpen: () => open,
+    closeModal: () => {
+      setOpen(false);
+      setFields({ username: "", email: "", dob: "", phone: "" });
+      setErrors({});
+    },
+    isClickInsideModal: (event) => {
+      return modalRef.current && modalRef.current.contains(event.target);
     }
-    if (open) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [open]);
+  }));
 
   const validate = () => {
     const errs = {};
@@ -73,15 +68,31 @@ function XModal() {
         <button onClick={() => setOpen(true)}>Open Form</button>
       )}
       {open && (
-        <div className="modal" style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center"
-        }}>
+        <div
+          className="modal"
+          style={{
+            position: "fixed",
+            top: "20vh",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "transparent",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: 0,
+          }}
+        >
           <div
             className="modal-content"
             ref={modalRef}
             style={{
-              background: "#fff", padding: 24, borderRadius: 8, minWidth: 320, position: "relative"
+              background: "#fff",
+              padding: 24,
+              borderRadius: 8,
+              minWidth: 320,
+              position: "relative",
+              boxShadow: "0 2px 16px rgba(0,0,0,0.2)",
             }}
           >
             <form onSubmit={handleSubmit}>
@@ -135,6 +146,6 @@ function XModal() {
       )}
     </div>
   );
-}
+});
 
 export default XModal;
